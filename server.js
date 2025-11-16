@@ -165,27 +165,41 @@ app.post("/tasks", authRequired, async (req, res) => {
 
 
 
-// Update task (edit text and/or done) – auth required
+// Update task (edit text, done, dueDate, order) – auth required
 app.put("/tasks/:id", authRequired, async (req, res) => {
   try {
     const doc = await db.get(req.params.id);
 
-    // Allow updates
-    if (typeof req.body.text === "string") doc.text = req.body.text.trim();
-    if (typeof req.body.done === "boolean") doc.done = req.body.done;
-    if (typeof req.body.order === "number") doc.order = req.body.order;
-    if (req.body.dueDate) doc.dueDate = req.body.dueDate;
+    // Update text
+    if (typeof req.body.text === "string") {
+      doc.text = req.body.text.trim();
+    }
+
+    // Update done flag
+    if (typeof req.body.done === "boolean") {
+      doc.done = req.body.done;
+    }
+
+    // Update due date
+    if (req.body.dueDate !== undefined) {
+      doc.dueDate = req.body.dueDate;   // store new date/time
+    }
+
+    // Update order
+    if (typeof req.body.order === "number") {
+      doc.order = req.body.order;
+    }
 
     doc.updatedAt = new Date().toISOString();
 
     const result = await db.insert(doc);
     res.json({ success: true, id: result.id });
-
   } catch (err) {
     console.error("Error updating task:", err);
     res.status(500).json({ error: err.toString() });
   }
 });
+
 
 
 

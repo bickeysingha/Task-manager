@@ -129,6 +129,11 @@ function renderTasks(tasks) {
       }
     }
 
+    const dateInput = document.createElement("input");
+    dateInput.type = "datetime-local";
+    dateInput.value = task.dueDate ? new Date(task.dueDate).toISOString().slice(0, 16) : "";
+    dateInput.onchange = () => updateDueDate(task.id, dateInput.value);
+
     const editBtn = document.createElement("button");
     editBtn.innerHTML = '<i class="fa fa-edit"></i>';
     editBtn.onclick = () => editTask(task.id, task.text);
@@ -140,6 +145,7 @@ function renderTasks(tasks) {
     li.appendChild(checkbox);
     li.appendChild(textSpan);
     li.appendChild(meta);
+    li.appendChild(dateInput);
     li.appendChild(editBtn);
     li.appendChild(delBtn);
 
@@ -188,21 +194,57 @@ async function toggleDone(id, done) {
   loadTasks();
 }
 
-async function editTask(id, oldText) {
+async function updateDueDate(id, newDateTime) {
   if (!authToken) return alert("Login first");
-  const newText = prompt("Edit task", oldText);
-  if (!newText) return;
+
+  const iso = new Date(newDateTime).toISOString();
 
   await fetch(`${API}/tasks/${id}`, {
     method: "PUT",
     headers: {
       "Content-Type": "application/json",
-      "x-auth-token": authToken,
+      "x-auth-token": authToken
     },
-    body: JSON.stringify({ text: newText }),
+    body: JSON.stringify({ dueDate: iso })
   });
+
   loadTasks();
 }
+
+// Edit task (text, dueDate)
+async function editTask(id, oldText) {
+  if (!authToken) return alert("Login first");
+
+  // Ask new text
+  const text = prompt("Edit task text:", oldText);
+  if (text === null || text.trim() === "") return;
+
+  // Ask new due date
+  const currentTask = tasksCache.find(t => t.id === id);
+  const oldDue = currentTask?.dueDate
+    ? new Date(currentTask.dueDate).toISOString().slice(0,16)
+    : "";
+
+  const newDue = prompt("Edit due date/time (YYYY-MM-DD HH:MM):", oldDue);
+
+  let dueDate = null;
+  if (newDue && newDue.trim() !== "") {
+    // convert to ISO
+    dueDate = new Date(newDue).toISOString();
+  }
+
+  await fetch(`${API}/tasks/${id}`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      "x-auth-token": authToken
+    },
+    body: JSON.stringify({ text, dueDate })
+  });
+
+  loadTasks(); // reload list
+}
+
 
 async function deleteTask(id) {
   if (!authToken) return alert("Login first");
@@ -271,12 +313,26 @@ async function saveOrder() {
 // Local reminders: fire notification a bit before due time (only while tab is open)
 function scheduleReminders(tasks) {
   const now = Date.now();
-  tasks.forEach((t) => {
-    if (!t.dueDate || t.done) return;
-    const dueTime = new Date(t.dueDate).getTime();
+
+  tasks.forEach(task => {
+    if (!task.dueDate || task.done) return;
+
+    const dueTime = new Date(task.dueDate).getTime();
     const diff = dueTime - now;
-    if (diff > 0 && diff < 10 * 60 * 1000) { // within 10 min
-      showNotification("Task Reminder", `${t.text} is due soon (${new Date(t.dueDate).toLocaleString()})`);
+
+    // Notify 10 min before
+    if (diff > 0 && diff < 10 * 60 * 1000) {
+      showNotification("Task Reminder", `${task.text} is due soon!`);
+    }
+
+    // Notify at exact time (± 1 min tolerance)
+    if (Math.abs(diff) < 60 * 1000) {
+      showNotification("Task Due!", `${task.text} is due now`);
+    }
+
+    // Notify if overdue
+    if (diff < 0) {
+      showNotification("Task Overdue!", `${task.text} is overdue`);
     }
   });
 }
