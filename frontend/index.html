@@ -16,23 +16,31 @@
   <div class="container">
 
     <!-- Login Section -->
-    <div class="card">
-      <h2>Login</h2>
-      <div class="input-group">
-        <input type="password" id="passwordInput" placeholder="Enter password">
-        <button onclick="login()">Login</button>
-      </div>
-      <p id="loginStatus" class="status"></p>
-    </div>
+   <div class="card">
+  <h2>Login / Register</h2>
+  <div class="input-group">
+    <input type="text" id="usernameInput" placeholder="Username">
+    <input type="password" id="passwordInput" placeholder="Password">
+  </div>
+  <div class="input-group">
+    <button onclick="register()">Register</button>
+    <button onclick="login()">Login</button>
+  </div>
+  <p id="loginStatus" class="status"></p>
+</div>
 
     <!-- Add Task -->
     <div class="card">
-      <h2>Add Task</h2>
-      <div class="input-group">
-        <input type="text" id="taskInput" placeholder="New task">
-        <button onclick="addTask()"><i class="fa fa-plus"></i></button>
-      </div>
-    </div>
+  <h2>Add Task</h2>
+  <div class="input-group">
+    <input type="text" id="taskInput" placeholder="New task">
+  </div>
+  <div class="input-group">
+    <input type="datetime-local" id="dueInput">
+    <button onclick="addTask()"><i class="fa fa-plus"></i></button>
+  </div>
+</div>
+
 
     <!-- Progress Bar -->
     <div class="progress-card">
