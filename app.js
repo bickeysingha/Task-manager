@@ -1,4 +1,6 @@
-const API = "http://localhost:3000";
+
+const API = "https://task-manager-24ux.onrender.com";
+
 let authToken = localStorage.getItem("authToken");
 let currentUser = localStorage.getItem("username") || null;
 
